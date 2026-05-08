@@ -1,0 +1,17 @@
+[package]
+name = "zk-student"
+description = "Zero-knowledge student identity verification for Brazilian DNE/CIE certificates"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
+time = { version = "0.3.47", default-features = false, features = ["alloc"] }
+rsa = { version = "0.9", features = ["sha1"] }
+sha1 = "0.10"
+thiserror = "2"
+
+[dev-dependencies]
+rand = "0.8"
