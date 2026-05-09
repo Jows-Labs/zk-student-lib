@@ -21,11 +21,40 @@ use zk_student::cert::{parse_pem, verify_signature};
 let pem = std::fs::read_to_string("student.pem").unwrap();
 let cert = parse_pem(&pem).unwrap();
 
-println!("{}", cert.fields.birth_date);  // 2005-12-12
-println!("{}", cert.fields.not_after);   // 2027-03-31
-println!("{}", cert.fields.issuer_cn);   // UNIAO NACIONAL DOS ESTUDANTES
+// time::Date fields — access components directly or enable the `time/formatting` feature to Display them
+let f = &cert.fields;
+println!("{}-{}-{}", f.birth_date.year(), f.birth_date.month(), f.birth_date.day());
+println!("{}", f.issuer_cn); // UNIAO NACIONAL DOS ESTUDANTES
 
-let is_valid = verify_signature(&cert, &issuer_pubkey).unwrap();
+verify_signature(&cert, &issuer_pubkey)?; // Err(SignatureInvalid) if key doesn't match
+```
+
+## Testing with a mock certificate
+
+Real DNE/CIE certificates contain sensitive personal data (CPF, RG, birth date) so they can't be used in tests or fixtures. The `mock` feature generates a synthetic certificate with a deterministic key pair and configurable fields, letting you test parsing and verification without real student data.
+
+```toml
+[dev-dependencies]
+zk-student = { git = "https://github.com/Jows-Labs/zk-student-lib", features = ["mock"] }
+```
+
+```rust
+use zk_student::mock::{mock_cert, mock_cert_from, CertInput};
+use zk_student::cert::{parse_der, verify_signature};
+
+let mock = mock_cert_from(&CertInput {
+    cpf: "98765432100".into(),
+    course: "Software Engineering".into(),
+    ..CertInput::default()
+});
+let cert = parse_der(&mock.der).unwrap();
+
+verify_signature(&cert, &mock.issuer_pubkey).unwrap();
+
+let f = &cert.fields;
+println!("{}-{:02}-{:02}", f.birth_date.year(), f.birth_date.month() as u8, f.birth_date.day());
+println!("{}", f.issuer_cn);
+
 ```
 
 ## License
