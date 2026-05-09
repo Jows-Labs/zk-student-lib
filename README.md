@@ -29,6 +29,34 @@ println!("{}", f.issuer_cn); // UNIAO NACIONAL DOS ESTUDANTES
 verify_signature(&cert, &issuer_pubkey)?; // Err(SignatureInvalid) if key doesn't match
 ```
 
+## Testing with a mock certificate
+
+Real DNE/CIE certificates contain sensitive personal data (CPF, RG, birth date) so they can't be used in tests or fixtures. The `mock` feature generates a synthetic certificate with a deterministic key pair and configurable fields, letting you test parsing and verification without real student data.
+
+```toml
+[dev-dependencies]
+zk-student = { git = "https://github.com/Jows-Labs/zk-student-lib", features = ["mock"] }
+```
+
+```rust
+use zk_student::mock::{mock_cert, mock_cert_from, CertInput};
+use zk_student::cert::{parse_der, verify_signature};
+
+let mock = mock_cert_from(&CertInput {
+    cpf: "98765432100".into(),
+    course: "Software Engineering".into(),
+    ..CertInput::default()
+});
+let cert = parse_der(&mock.der).unwrap();
+
+verify_signature(&cert, &mock.issuer_pubkey).unwrap();
+
+let f = &cert.fields;
+println!("{}-{:02}-{:02}", f.birth_date.year(), f.birth_date.month() as u8, f.birth_date.day());
+println!("{}", f.issuer_cn);
+
+```
+
 ## License
 
 MIT

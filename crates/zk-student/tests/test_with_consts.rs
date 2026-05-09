@@ -31,7 +31,7 @@ fn parses_validity() {
 fn parses_issuer_cn() {
     let f = fixtures::generate();
     let cert = parse_der(&f.der).unwrap();
-    assert_eq!(cert.fields.issuer_cn, "ENTIDADE TESTE DE ESTUDANTES");
+    assert_eq!(cert.fields.issuer_cn, "TEST STUDENT ENTITY");
 }
 
 #[test]
