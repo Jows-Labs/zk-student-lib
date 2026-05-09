@@ -6,12 +6,31 @@ edition.workspace = true
 license.workspace = true
 repository.workspace = true
 
+[features]
+# `verify`  — RSA signature verification. Disable for Solana/SP1 (types + parser only).
+# `mock`    — deterministic cert generator for testing. Implies `verify` + `std`.
+# `std`     — lifts the no_std constraint (required by rand/rsa key-gen).
+default = ["verify"]
+verify  = ["dep:rsa", "dep:sha1"]
+mock    = ["verify", "dep:rand", "std"]
+std     = []
+
 [dependencies]
-base64 = { version = "0.22.1", default-features = false, features = ["alloc"] }
-time = { version = "0.3.47", default-features = false, features = ["alloc"] }
-rsa = { version = "0.9", features = ["sha1"] }
-sha1 = "0.10"
-thiserror = "2"
+base64    = { version = "0.22.1", default-features = false, features = ["alloc"] }
+time      = { version = "0.3.47", default-features = false, features = ["alloc"] }
+thiserror = { version = "2", default-features = false }
+rsa       = { version = "0.9", features = ["sha1"], optional = true }
+sha1      = { version = "0.10", optional = true }
+rand      = { version = "0.8", optional = true }
+
+[[test]]
+name = "fixtures"
+required-features = ["mock"]
+
+[[test]]
+name = "test_with_consts"
+required-features = ["mock"]
 
 [dev-dependencies]
-rand = "0.8"
+base64 = "0.22"
+rand   = "0.8"

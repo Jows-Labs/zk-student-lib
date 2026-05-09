@@ -21,11 +21,12 @@ use zk_student::cert::{parse_pem, verify_signature};
 let pem = std::fs::read_to_string("student.pem").unwrap();
 let cert = parse_pem(&pem).unwrap();
 
-println!("{}", cert.fields.birth_date);  // 2005-12-12
-println!("{}", cert.fields.not_after);   // 2027-03-31
-println!("{}", cert.fields.issuer_cn);   // UNIAO NACIONAL DOS ESTUDANTES
+// time::Date fields — access components directly or enable the `time/formatting` feature to Display them
+let f = &cert.fields;
+println!("{}-{}-{}", f.birth_date.year(), f.birth_date.month(), f.birth_date.day());
+println!("{}", f.issuer_cn); // UNIAO NACIONAL DOS ESTUDANTES
 
-let is_valid = verify_signature(&cert, &issuer_pubkey).unwrap();
+verify_signature(&cert, &issuer_pubkey)?; // Err(SignatureInvalid) if key doesn't match
 ```
 
 ## License

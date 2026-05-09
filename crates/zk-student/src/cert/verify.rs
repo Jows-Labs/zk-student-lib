@@ -1,3 +1,5 @@
+use alloc::format;
+
 use rsa::pkcs1v15::{Signature, VerifyingKey};
 use rsa::signature::Verifier;
 use rsa::RsaPublicKey;
@@ -8,18 +10,18 @@ use super::parser::AttributeCertificate;
 
 /// Verify the RSA-2048 + SHA-1 signature on an Attribute Certificate.
 ///
-/// The `issuer_pubkey` is the RSA public key of the entity that signed
-/// the certificate (e.g., UNE for DNE certificates).
+/// Returns `Ok(())` if valid. Err variants: `DerParse` if the signature bytes
+/// are malformed, `SignatureInvalid` if the key doesn't match.
 pub fn verify_signature(
     cert: &AttributeCertificate,
     issuer_pubkey: &RsaPublicKey,
-) -> Result<bool, CertError> {
+) -> Result<(), CertError> {
     let verifying_key: VerifyingKey<Sha1> = VerifyingKey::new(issuer_pubkey.clone());
 
-    let signature = Signature::try_from(cert.fields.signature.as_slice())
+    let signature = Signature::try_from(cert.signature.as_slice())
         .map_err(|e| CertError::DerParse(format!("invalid signature bytes: {e}")))?;
 
-    Ok(verifying_key
-        .verify(&cert.fields.tbs_bytes, &signature)
-        .is_ok())
+    verifying_key
+        .verify(&cert.tbs_bytes, &signature)
+        .map_err(|_| CertError::SignatureInvalid)
 }

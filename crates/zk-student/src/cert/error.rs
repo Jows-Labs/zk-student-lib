@@ -1,3 +1,4 @@
+use alloc::string::String;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -14,4 +15,6 @@ pub enum CertError {
     #[error("invalid date format: {0}")]
     InvalidDate(String),
 
+    #[error("signature verification failed")]
+    SignatureInvalid,
 }
