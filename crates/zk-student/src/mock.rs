@@ -21,45 +21,45 @@ pub struct MockCert {
 pub struct CertInput {
     // OID 2.16.76.1.10.1 — student identity
     pub birth_date: String,        // ddmmaaaa (8 chars)
-    pub cpf:        String,        // 11 digits; "00000000000" when unavailable
-    pub matricula:  String,        // up to 15 chars, zero-padded left
-    pub rg:         String,        // up to 15 chars, zero-padded left
-    pub rg_org_uf:  Option<String>,// up to 10 chars (issuing body + UF)
+    pub cpf: String,               // 11 digits; "00000000000" when unavailable
+    pub matricula: String,         // up to 15 chars, zero-padded left
+    pub rg: String,                // up to 15 chars, zero-padded left
+    pub rg_org_uf: Option<String>, // up to 10 chars (issuing body + UF)
 
     // OID 2.16.76.1.10.2 — institution
-    pub institution:  String,      // up to 40 chars
-    pub degree:       String,      // up to 15 chars (e.g. "SUPERIOR")
-    pub course:       String,      // up to 30 chars
-    pub municipality: String,      // up to 20 chars
-    pub uf:           String,      // 2 chars
+    pub institution: String,  // up to 40 chars
+    pub degree: String,       // up to 15 chars (e.g. "SUPERIOR")
+    pub course: String,       // up to 30 chars
+    pub municipality: String, // up to 20 chars
+    pub uf: String,           // 2 chars
 
     // OID 2.16.76.1.4.3 — nome social (Decreto 8.727/2016)
     pub social_name: Option<String>,
 
-    pub issuer_cn:  String,
+    pub issuer_cn: String,
     pub not_before: String, // GeneralizedTime "YYYYMMDDHHMMSSZ"
-    pub not_after:  String, // GeneralizedTime "YYYYMMDDHHMMSSZ"
-    pub serial:     Vec<u8>,
+    pub not_after: String,  // GeneralizedTime "YYYYMMDDHHMMSSZ"
+    pub serial: Vec<u8>,
 }
 
 impl Default for CertInput {
     fn default() -> Self {
         Self {
-            birth_date:   "01012000".into(),
-            cpf:          "12345678901".into(),
-            matricula:    "0".into(),
-            rg:           "523638395".into(),
-            rg_org_uf:    None,
-            institution:  "Federal University of Testing".into(),
-            degree:       "SUPERIOR".into(),
-            course:       "Computer Science".into(),
+            birth_date: "01012000".into(),
+            cpf: "12345678901".into(),
+            matricula: "0".into(),
+            rg: "523638395".into(),
+            rg_org_uf: None,
+            institution: "Federal University of Testing".into(),
+            degree: "SUPERIOR".into(),
+            course: "Computer Science".into(),
             municipality: "Sao Paulo".into(),
-            uf:           "SP".into(),
-            social_name:  None,
-            issuer_cn:    "TEST STUDENT ENTITY".into(),
-            not_before:   "20260101120000Z".into(),
-            not_after:    "20270331235959Z".into(),
-            serial:       vec![0x01, 0x10, 0x65, 0x36],
+            uf: "SP".into(),
+            social_name: None,
+            issuer_cn: "TEST STUDENT ENTITY".into(),
+            not_before: "20260101120000Z".into(),
+            not_after: "20270331235959Z".into(),
+            serial: vec![0x01, 0x10, 0x65, 0x36],
         }
     }
 }
@@ -106,21 +106,28 @@ pub fn mock_cert_from(input: &CertInput) -> MockCert {
 
     let cert_der = der_seq(&[tbs, sha1_rsa_algo(), der_bit_string(sig_bytes.as_ref())].concat());
 
-    MockCert { der: cert_der, issuer_pubkey: pubkey, issuer_privkey: privkey }
+    MockCert {
+        der: cert_der,
+        issuer_pubkey: pubkey,
+        issuer_privkey: privkey,
+    }
 }
 
 fn build_tbs(input: &CertInput, pubkey: &RsaPublicKey) -> Vec<u8> {
     der_seq(
         &[
-            der_integer(&[0x01]),           // version v2 encoded as integer 1 (zero-indexed)
-            der_seq(&[]),                   // holder (empty; parser skips it)
+            der_integer(&[0x01]), // version v2 encoded as integer 1 (zero-indexed)
+            der_seq(&[]),         // holder (empty; parser skips it)
             build_issuer(&input.issuer_cn),
-            sha1_rsa_algo(),                // inner signature algorithm (required by spec)
+            sha1_rsa_algo(), // inner signature algorithm (required by spec)
             der_integer(&input.serial),
-            der_seq(&[
-                der_generalized_time(&input.not_before),
-                der_generalized_time(&input.not_after),
-            ].concat()),
+            der_seq(
+                &[
+                    der_generalized_time(&input.not_before),
+                    der_generalized_time(&input.not_after),
+                ]
+                .concat(),
+            ),
             build_attributes(input),
             der_seq(&[build_aki(pubkey), build_aia()].concat()), // mandatory: AKI + AIA (§2.9)
         ]
@@ -242,14 +249,30 @@ fn der_tag(tag: u8, content: &[u8]) -> Vec<u8> {
     out
 }
 
-fn der_seq(content: &[u8]) -> Vec<u8>        { der_tag(0x30, content) }
-fn der_set(content: &[u8]) -> Vec<u8>        { der_tag(0x31, content) }
-fn der_oid(bytes: &[u8]) -> Vec<u8>          { der_tag(0x06, bytes) }
-fn der_integer(bytes: &[u8]) -> Vec<u8>      { der_tag(0x02, bytes) }
-fn der_octet_string(bytes: &[u8]) -> Vec<u8> { der_tag(0x04, bytes) }
-fn der_utf8_string(s: &str) -> Vec<u8>       { der_tag(0x0C, s.as_bytes()) }
-fn der_printable_string(s: &str) -> Vec<u8>  { der_tag(0x13, s.as_bytes()) }
-fn der_generalized_time(s: &str) -> Vec<u8>  { der_tag(0x18, s.as_bytes()) }
+fn der_seq(content: &[u8]) -> Vec<u8> {
+    der_tag(0x30, content)
+}
+fn der_set(content: &[u8]) -> Vec<u8> {
+    der_tag(0x31, content)
+}
+fn der_oid(bytes: &[u8]) -> Vec<u8> {
+    der_tag(0x06, bytes)
+}
+fn der_integer(bytes: &[u8]) -> Vec<u8> {
+    der_tag(0x02, bytes)
+}
+fn der_octet_string(bytes: &[u8]) -> Vec<u8> {
+    der_tag(0x04, bytes)
+}
+fn der_utf8_string(s: &str) -> Vec<u8> {
+    der_tag(0x0C, s.as_bytes())
+}
+fn der_printable_string(s: &str) -> Vec<u8> {
+    der_tag(0x13, s.as_bytes())
+}
+fn der_generalized_time(s: &str) -> Vec<u8> {
+    der_tag(0x18, s.as_bytes())
+}
 
 fn der_bit_string(bytes: &[u8]) -> Vec<u8> {
     let mut content = vec![0x00]; // unused-bits count (always 0 for RSA)
