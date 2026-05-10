@@ -21,7 +21,7 @@ use zk_student::cert::{parse_pem, verify_signature};
 let pem = std::fs::read_to_string("student.pem").unwrap();
 let cert = parse_pem(&pem).unwrap();
 
-// time::Date fields — access components directly or enable the `time/formatting` feature to Display them
+// time::Date fields: access components directly or enable the `time/formatting` feature to Display them
 let f = &cert.fields;
 println!("{}-{}-{}", f.birth_date.year(), f.birth_date.month(), f.birth_date.day());
 println!("{}", f.issuer_cn); // UNIAO NACIONAL DOS ESTUDANTES
@@ -56,6 +56,44 @@ println!("{}-{:02}-{:02}", f.birth_date.year(), f.birth_date.month() as u8, f.bi
 println!("{}", f.issuer_cn);
 
 ```
+
+## WebAssembly (Next.js / browser)
+
+**Build** (requires cloning this repo):
+
+```bash
+cargo install wasm-pack
+wasm-pack build crates/zk-student-wasm --target bundler
+```
+
+This outputs a `pkg/` directory you can import directly into your Next.js project.
+
+**`next.config.js`:**
+
+```js
+const nextConfig = {
+  webpack(config) {
+    config.experiments = { ...config.experiments, asyncWebAssembly: true };
+    return config;
+  },
+};
+```
+
+**Usage:**
+
+```ts
+import init, { parse_cert, verify_cert } from 'zk-student-wasm';
+
+await init();
+
+// Parse: returns { birth_date, not_before, not_after, issuer_cn } as "YYYY-MM-DD" strings
+const fields = parse_cert(derBytes);
+
+// Verify: throws if signature is invalid or key doesn't match
+verify_cert(derBytes, issuerPubkeyDer);
+```
+
+`derBytes` and `issuerPubkeyDer` are `Uint8Array`. The issuer public key is PKCS#1 DER; bundle it in the app or fetch it once from the AIA URL embedded in the certificate.
 
 ## License
 

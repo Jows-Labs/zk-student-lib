@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/zk-student"]
+members = ["crates/zk-student", "crates/zk-student-wasm"]
 resolver = "2"
 
 [workspace.package]
